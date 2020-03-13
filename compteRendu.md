@@ -335,13 +335,37 @@ Defaults        secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:$
 
 **1. Dans votre $HOME, créez un dossier test, et dans ce dossier un fichier fichier contenant quelques lignes de texte. Quels sont les droits sur test et fichier ?**
 
+```
+$ mkdir test
+$ echo 'aaa' > test/fichier
+$ ls -l
+drwxrwxr-x 2 herysia herysia 4096 Mar 13 17:07 test
+
+$ ls -l test
+-rw-rw-r-- 1 herysia herysia 4 Mar 13 17:08 fichier
+
+```
+On a donc 775 pour le dossier, et 664 pour le fichier
 
 &nbsp;
 
 
 **2. Retirez tous les droits sur ce fichier (même pour vous), puis essayez de le modifier et de l’afficher en tant que root. Conclusion ?**
 
+```
+# chmod 000 test/fichier
+# ls -l test
+total 4
+---------- 1 herysia herysia 4 Mar 13 17:08 fichier
 
+# echo 'bbb' > test/fichier
+# cat test/fichier
+bbb
+# rm test/fichier
+# ls -l test
+total 0
+```
+On remarque que, en tant que root, on est tout de même capable de lire, écrire et supprimer le fichier malgrès le fait que toutes les permissions aient été retirées
 &nbsp;
 
 
