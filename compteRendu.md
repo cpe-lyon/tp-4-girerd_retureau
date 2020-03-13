@@ -432,18 +432,87 @@ On rétalit les droits
 
 **6. Créez dans test un fichier nouveau ainsi qu’un répertoire sstest. Retirez au fichier nouveau et au répertoire test le droit en écriture. Tentez de modifier le fichier nouveau. Rétablissez ensuite le droit en écriture au répertoire test. Tentez de modifier le fichier nouveau, puis de le supprimer. Que pouvez-vous déduire de toutes ces manipulations ?**
 
+```
+$ echo 'test' > nouveau
+$ mkdir sstest
+$ sudo chmod u-w nouveau
+$ cd ..
+$ sudo chmod u-w test
+$ echo 'test' > test/nouveau
+bash: test/nouveau: Permission deniedrm 
+'test' > test/nouveau
+bash: test/nouveau: Permission denied
 
+$ sudo chmod u+w test
+$ echo 'test' > test/nouveau
+-bash: test/nouveau: Permission denied
+$ rm test/nouveau
+rm: remove write-protected regular file 'test/nouveau'? yes
+$ ls test
+fichier  sstest
+```
+Retirer les droits d'écriture au dossier et au fichier nous empèche d'écrire ou de supprimer le fichier.
+Remettre les droits au dossier (sans les remettre au fichier) nous empèche toujours d'écrire sur le fichier, néamoins nous pouvons écrire dans le dossier, et donc supprimer le fichier
 &nbsp;
 
 
 **7. Positionnez vous dans votre répertoire personnel, puis retirez le droit en exécution du répertoire test. Tentez de créer, supprimer, ou modifier un fichier dans le répertoire test, de vous y déplacer, d’en lister le contenu, etc…Qu’en déduisez vous quant au sens du droit en exécution pour les répertoires ?**
 
+```
+$ chmod u-x test
+
+$ touch test/aa
+touch: cannot touch 'test/aa': Permission denied
+
+$ echo 'test' > test/fichier
+bash: test/fichier: Permission denied
+
+
+$ ls -l test
+ls: cannot access 'test/fichier': Permission denied
+ls: cannot access 'test/sstest': Permission denied
+ls: cannot access 'test/nouveau': Permission denied
+total 0
+-????????? ? ? ? ?            ? fichier
+-????????? ? ? ? ?            ? nouveau
+d????????? ? ? ? ?            ? sstest
+
+
+$ rm test/fichier
+rm: cannot remove 'test/fichier': Permission denied
+
+$ ./test/fichier
+bash: ./test/fichier: Permission denied
+```
+Supprimer les droits d'éxécution du dossier nous empèche de créer, supprimer ou modifier un fichier.
+Nous pouvons toujour lister le contenu, mais il y a des erreur indiquant qu'il est impossible d'accèder aux éléments, et donc d'en déduire leurs caractéristiques autre que leur nom
 
 &nbsp;
 
 
 **8. Rétablissez le droit en exécution du répertoire test. Positionnez vous dans ce répertoire et retirez lui à nouveau le droit d’exécution. Essayez de créer, supprimer et modifier un fichier dans le répertoire test, de vous déplacer dans ssrep, de lister son contenu. Qu’en concluez-vous quant à l’influence des droits que l’on possède sur le répertoire courant ? Peut-on retourner dans le répertoire parent avec ”cd ..” ? Pouvez-vous donner une explication ?**
 
+```
+$ chmod u+x test
+herysia@server:~$ cd test
+$ chmod u-x ../test
+$ touch a
+touch: cannot touch 'a': Permission denied
+$ ls
+ls: cannot open directory '.': Permission denied
+$ rm fichier
+rm: cannot remove 'fichier': Permission denied
+$ echo 'aaa' > fichier
+bash: fichier: Permission denied
+$ cd ssrep
+bash: cd: ssrep: Permission denied
+$ ls ssrep
+ls: cannot access 'ssrep': Permission denied
+```
+On peut en conclure que nos droits sont calqués de nos permissions du répertoire courant.
+Dans le répertoire test, nous n'avons pas les droits d'exécution, nous ne pouvons donc pas exécuter de commande (donc impossible de créer, supprimer, modifier un fichier, impossible de se déplacer ou liste le contenu d'un dossier ou du dossier courant)
+
+`$ cd ..` Fonctionne pourtant car nous possédons les permissions dans le dossier parent. Cela n'etait pas le cas pour le dossier ssrep, malgrès le fait que nous ayons les permessions du ce dossier, n'ayant pas les permissions sur son parent il n'est pas possible d'y accéder
 
 &nbsp;
 
