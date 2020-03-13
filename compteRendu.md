@@ -1,5 +1,3 @@
-
-  
 # Compte-Rendu TP4 - Utilisateurs, groupes et permissions
  
 &nbsp;
@@ -21,32 +19,73 @@
 
 **1. Commencez par créer deux groupes groupe1 et groupe2**
 
-`resultat`
+```
+# addgroup groupe1
+
+Adding group `groupe1' (GID 1001) ...
+Done.
+
+# addgroup groupe2
+
+Adding group `groupe2' (GID 1002) ...
+Done.
+```
 
 &nbsp;
 
 **2. Créez ensuite 4 utilisateurs u1, u2, u3, u4 avec la commande useradd, en demandant la création de leur dossier personnel et avec bash pour shell**
 
+```
+# useradd -m u1
+# useradd -m u2
+# useradd -m u3
+# useradd -m u4
+```
 
+*Note: l'option -m permet de créer le dossier utilisateur*
 
 &nbsp;
+
 **3. Ajoutez les utilisateurs dans les groupes créés :**
 - **u1, u2, u4 dans groupe1**
 - **u2, u3, u4 dans groupe2**
 
-`resultat`
+```
+# usermod -a -G groupe1 u1
+# usermod -a -G groupe1 u2
+# usermod -a -G groupe1 u4
 
+# usermod -a -G groupe2 u2
+# usermod -a -G groupe2 u3
+# usermod -a -G groupe2 u4
+```
+`usermod -a -G nom_groupe nom_utilisateur` 
+*Permet d'ajouter un utilisateur existant à un groupe (secondaire) existant, càd en conservant ses groupes*
 &nbsp;
 
 **4. Donnez deux moyens d’afficher les membres de groupe2**
 
-
+```
+# grep groupe1 /etc/group | cut -d: -f4
+u1,u2,u4
+```
+On installe le package **members** (`apt install members`)
+```
+# members groupe1
+u1 u2 u4
+```
 
 &nbsp;
 
 **5. Faites de groupe1 le groupe propriétaire de /home/u1 et /home/u2 et de groupe2 le groupe propriétaire de /home/u3 et /home/u4**
 
-
+```
+# chgrp groupe1 /home/u1
+# chgrp groupe1 /home/u2
+# chgrp groupe2 /home/u3
+# chgrp groupe2 /home/u4
+```
+*Note: On pourrait aussi utiliser l'option -R pour affecter les fichiers et sous dossiers (récursif)*
 
 &nbsp;
 
@@ -54,40 +93,94 @@
 - **groupe1 pour u1 et u2**
 - **groupe2 pour u3 et u4**
 
+```
+# usermod u1 -g groupe1
+# usermod u2 -g groupe1
+# usermod u3 -g groupe2
+# usermod u4 -g groupe2
+```
+A ce stade, on vérifie les groupes de nos utilisateurs:
+```
+# groups u1
+u1 : groupe1
+# groups u2
+u2 : groupe1 groupe2
+# groups u3
+u3 : groupe2
+# groups u4
+u4 : groupe2 groupe1
+```
 
 &nbsp;
 
 **7. Créez deux répertoires /home/groupe1 et /home/groupe2 pour le contenu commun aux groupes, et mettez en place les permissions permettant aux membres de chaque groupe d’écrire dans le dossier associé.**
 
-
+```
+# mkdir /home/groupe1
+# chgrp groupe1 /home/groupe1
+# chmod g+w /home/groupe1
+# mkdir /home/groupe2
+# chgrp groupe2 /home/groupe2
+# chmod g+w /home/groupe2
+```
+*On crée le dossier, transfert l'ownership du groupe, puis donne les droit d'écriture au groupe*
 &nbsp;
 
 
 **8. Comment faire pour que, dans ces dossiers, seul le propriétaire d’un fichier ait le droit de renommer ou supprimer ce fichier ?**
 
+https://stackoverflow.com/questions/1163294/changing-chmod-for-files-but-not-directories
 
+`find . -type f -print0 | xargs -0 chmod 644`
+
+*Permet de changer les permissions des fichiers uniquement, en conservant les permissions des dossieres appliquées précédemment*
 &nbsp;
 
 
 **9. Pouvez-vous vous connecter en tant que u1 ? Pourquoi ?**
 
+On ne peut pas se connecter en tant que u1 car son compte n'est pas actif (il n'a pas de mot de passe).
+Néamoins on peut simuler le fait d'être un utilisateur en utilisant la commande:
+
+`su - u1`
 
 &nbsp;
 
-
 **10. Activez le compte de l’utilisateur u1 et vérifiez que vous pouvez désormais vous connecter avec son compte**
 
+```
+# passwd u1
+Enter new UNIX password:
+Retype new UNIX password:
+passwd: password updated successfully
+```
 
 &nbsp;
 
 
 **11. Quels sont l’uid et le gid de u1 ?**
 
+On peut afficher l'uid et gid d'un utilisateur:
+```
+# id u1
+uid=1001(u1) gid=1001(groupe1) groups=1001(groupe1)
+```
 
+Son uid est **1001**
+Son gid est **1001**
 &nbsp;
 
 
 **12. Quel utilisateur a pour uid 1003 ?**
+
+```
+# cat /etc/passwd | cut -d: -f1,3 | grep 1003 | cut -d: -f1
+u3
+```
+`cat /etc/passwd` Permet de récupérer le contenu du fichier /etc/passwd
+`cut -d: -f1,3` Permet de récupérer les colonnes 1 (utilisateur) et 3 (uid)
+`grep 1003` Permet de récupérer les lignes contenant 1003
+`cut -d: -f1` Permet de récupérer la 1ère colonne -> le nom d'utilisateur
 
 
 &nbsp;
@@ -95,11 +188,39 @@
 
 **13. Quel est l’id du groupe groupe1 ?**
 
-
+De même que précédemment (sur le fichier /etc/group), avec des colonnes différentes, car il n'y a pas de commande comme `id` pour les groupes.
+```
+# cat /etc/group | cut -d: -f1,3 | grep groupe1 | cut -d: -f2
+1001
+```
+Le groupe **groupe1** a pour gid **1001**
 &nbsp;
 
 
 **14. Quel groupe a pour guid 1002 ? ( Rien n’empêche d’avoir un groupe dont le nom serait 1002...)**
+
+```
+# cat /etc/group | cut -d: -f3 | grep -n 1002 | cut -d: -f1
+groupe2
+```
+*Note: Cette solution de prends pas en compte le cas où un groupe possède le gid recherché en tant que nom*
+
+On pourrait le traiter comme celà:
+
+```
+cat /etc/group | head -`cat /etc/group | cut -d: -f3 | grep -n 1002 | cut -d: -f1` | tail -1 | cut -d: -f1
+groupe2
+```
+On réutilise la commande précédente, rejoutant -n à grep:
+
+`cat /etc/group | cut -d: -f3 | grep -n 1002 | cut -d: -f1` Permet d'obtenir le numéro de la ligne du groupe ayant le gid 1002
+
+On l'utilise ensuite en paramètre de head (`head -{numéro de ligne}`)
+
+Finalement:
+`cat /etc/group | head -n | tail -1 | cut -d: -f1` Permet de retourner la 1ère colonne de la nième ligne (n obtenu via la commande précédemment décrite), ce qui correspond au nom de l'utilisateur de gid **1002**
+
+*Note: On pourrait utiliser la même methode pour éviter les erreur de recherche avec les commandes précédentes*
 
 
 &nbsp;
@@ -107,6 +228,17 @@
 
 **15. Retirez l’utilisateur u3 du groupe groupe2. Que se passe-t-il ? Expliquez**
 
+```
+# groups u3
+u3 : groupe2
+
+# gpasswd -d u3 groupe2
+Removing user u3 from group groupe2
+
+# groups u3
+u3 : groupe2
+```
+*On remarque que le groupe n'a pas changé, cela est expliqué par le fait que u3 ne possèdant un seul groupe, il sera remis dans le groupe portant son nom. Cette réatribution sera effectuée lors de la prochaine connexion de u3.*
 
 &nbsp;
 
@@ -118,25 +250,81 @@
 — **l’utilisateur est averti 14 jours avant l’expiration de son mot de passe**
 — **le compte sera bloqué 30 jours après expiration du mot de passe**
 
+```
+# chage -E 2020-06-1 u4
+# chage -M 90 u4
+# chage -m 5 u4
+# chage -W 14 u4
+# chage -I 30 u4
+```
+`-E` change la date d'expiration de l'utilisateur
+`-M` change la durée maximale de validité du mot de passe
+`-m` change le délai avant de pouvoir rechanger son mot de passe
+`-W` change le nombre de jour où l'utilisateur est averti avant l'expiration de son mot de passe
+`-I` change le nombre de jours après lequel, suite à l'expiration de son mot de passe, l'utilisateur est bloqué
 
+On vérifie les valeurs affectées
+```
+# chage -l u4
+Last password change                                    : Mar 13, 2020
+Password expires                                        : Jun 11, 2020
+Password inactive                                       : Jul 11, 2020
+Account expires                                         : Jun 01, 2020
+Minimum number of days between password change          : 5
+Maximum number of days between password change          : 90
+Number of days of warning before password expires       : 14
+```
 &nbsp;
 
 
 **17. Quel est l’interpréteur de commandes (Shell) de l’utilisateur root ?**
 
+Connecté en tant que root:
+
+```
+root@server:~# printenv SHELL
+/bin/bash
+```
 
 &nbsp;
 
 
 **18. à quoi correspond l’utilisateur nobody ?**
 
+C'est un utilisateur existant par défaut, ayant les droits minimum possibles sur le système.
+Il est utilisé pour tester des outils ne nécessitant aucun droits particuliers, ou pour des services sensibles (comme des serveurs webs, databases, ...)
 
 &nbsp;
 
 
 **19. Par défaut, combien de temps la commande sudo conserve-t-elle votre mot de passe en mémoire ? Quelle commande permet de forcer sudo à oublier votre mot de passe ?**
 
+Par défaut, le temps d'expiration du mot de passe sudo est de 15 minutes.
+On peut le modifier en se connectant sur l'utilisateur root, éxécutant la commande `visudo`
+<pre>
+Et modifier le fichier:
+#
+# This file MUST be edited with the 'visudo' command as root.
+#
+# Please consider adding local content in /etc/sudoers.d/ instead of
+# directly modifying this file.
+#
+# See the man page for details on how to write a sudoers file.
+#
+Defaults        env_reset,<b><u>timestamp_timeout=0</u></b>
+Defaults        mail_badpass
+Defaults        secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:$
 
+# Host alias specification
+
+# User alias specification
+
+# Cmnd alias specification
+
+# User privilege specification
+
+</pre>
+*On a ajouté `timestamp_timeout=0` pour désactiver la sauvegarde du mot de passe lors d'un sudo*
 &nbsp;
 
 ***
