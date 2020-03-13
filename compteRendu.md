@@ -371,12 +371,40 @@ On remarque que, en tant que root, on est tout de même capable de lire, écrire
 
 **3. Redonnez vous les droits en écriture et exécution sur fichier puis exécutez la commande echo "echo Hello" > fichier. On a vu lors des TP précédents que cette commande remplace le contenu d’un fichier s’il existe déjà. Que peut-on dire au sujet des droits ?**
 
+```
+$ sudo chmod u+wx fichier
+$ ls -l
+total 4
+--wx------ 1 herysia herysia 4 Mar 13 17:08 fichier
 
+
+$ echo "echo Hello" > fichier
+$ ls -l
+total 4
+--wx------ 1 herysia herysia 11 Mar 13 17:32 fichier
+```
+
+*Les droites d'ecriture pour l'utilisateur sont suffisant car nous somme propriétaires du fichier*
 &nbsp;
 
 
 **4. Essayez d’exécuter le fichier. Est-ce que cela fonctionne ? Et avec sudo ? Expliquez**
 
+```
+$ ./fichier
+bash: ./fichier: Permission denied
+$ sudo ./fichier
+Hello
+```
+Sans sudo, on ne peut pas exécuter le fichier, pourtant l'utilisateur possède les droits d'éxécution. C'est le cas car l'utilisateur n'a pas les droits de lecture.
+Avec sudo, on passe par dessus les permissions, on peut donc l'exécuter sans problèmes
+
+Correction:
+```
+$ sudo chmod u+r fichier
+$ ./fichier
+Hello
+```
 
 &nbsp;
 
