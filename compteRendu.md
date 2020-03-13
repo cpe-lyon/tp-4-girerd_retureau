@@ -411,6 +411,21 @@ Hello
 
 **5. Placez-vous dans le répertoire test, et retirez-vous le droit en lecture pour ce répertoire. Listez le contenu du répertoire, puis exécutez ou affichez le contenu du fichier fichier. Qu’en déduisez-vous ? Rétablissez le droit en lecture sur test**
 
+```
+$ sudo chmod u-r test
+herysia@server:~$ ls test
+ls: cannot open directory 'test': Permission denied
+
+$ cat test/fichier
+echo Hello
+
+$ ./test/fichier
+Hello
+```
+*On ne peut pas afficher le contenu du dossier test car on a pas les droits en lecture, néamoins les permissions du fichier n'ont pas changer, donc on peut toujours le lire ou l'exécuter*
+
+On rétalit les droits
+`$ sudo chmod u+r test`
 
 &nbsp;
 
