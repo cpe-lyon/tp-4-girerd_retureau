@@ -413,7 +413,7 @@ Hello
 
 ```
 $ sudo chmod u-r test
-herysia@server:~$ ls test
+$ ls test
 ls: cannot open directory 'test': Permission denied
 
 $ cat test/fichier
@@ -494,7 +494,7 @@ Nous pouvons toujour lister le contenu, mais il y a des erreur indiquant qu'il e
 
 ```
 $ chmod u+x test
-herysia@server:~$ cd test
+$ cd test
 $ chmod u-x ../test
 $ touch a
 touch: cannot touch 'a': Permission denied
@@ -519,33 +519,132 @@ Dans le répertoire test, nous n'avons pas les droits d'exécution, nous ne pouv
 
 **9. Rétablissez le droit en exécution du répertoire test. Attribuez au fichier fichier les droits suffisants pour qu’une autre personne de votre groupe puisse y accéder en lecture, mais pas en écriture.**
 
+```
+$ chmod u+x test
+$ chmod g+r test/fichier
+$ chmod g-w test/fichier
+```
 
 &nbsp;
 
 
 **10. Définissez un umask très restrictif qui interdit à quiconque à part vous l’accès en lecture ou en écriture, ainsi que la traversée de vos répertoires. Testez sur un nouveau fichier et un nouveau répertoire.**
 
+```
+$ umask 077
+$ umask -S
+u=rwx,g=,o=
+```
+Testons de créer un nouveau dossier et fichier, et d'y acceder nous même
+```
+$ mkdir abc
+$ echo 'test' > abc/aaa
+$ cd abc
+$ ls
+aaa
+$ cat aaa
+test
+```
+Cela fonctionne
 
+Changeons d'utilisateur et réessayons
+```
+$ su u1
+Password:
+$ cd /home/herysia
+$ ls
+aaa  abc  repo-cpe  scripts  test
+$ cd abc
+sh: 32: cd: can't cd to abc
+$ ls abc
+ls: cannot open directory 'abc': Permission denied
+$ touch abc/test
+touch: cannot touch 'abc/test': Permission denied
+```
+On observe que l'utilisateur ne peut pas acceder au dossier, lire un fichier, ni écrire dedans
+
+*Note: On peut toujours accéder aux autres éléments tels que le dossier test car umask n'est appliqué uniquement aux nouveaux dossiers et fichiers*
 &nbsp;
 
 
 **11. Définissez un umask très permissif qui autorise tout le monde à lire vos fichiers et traverser vos répertoires, mais n’autorise que vous à écrire. Testez sur un nouveau fichier et un nouveau répertoire**
 
+```
+$ umask 022
+$ mkdir q11
+$ echo 'test q11' > q11/test
+$ su u1
 
+```
+On teste avec un utilisateur
+```
+$ su u1
+Password:
+$ cd /home/herysia
+$ ls
+aaa  abc  q11  repo-cpe  scripts  test
+$ cd q11
+$ ls
+test
+$ cat test
+test q11
+$ mkdir u1
+mkdir: cannot create directory ‘u1’: Permission denied
+$ touch u1
+touch: cannot touch 'u1': Permission denied
+```
+On vérifie que l'on peut bien naviguer dans le nouveau dossier créé, lire les fichiers, mais pas créer de dossier ou fichier
 &nbsp;
 
 
 **12. Définissez un umask équilibré qui vous autorise un accès complet et autorise un accès en lecture aux membres de votre groupe. Testez sur un nouveau fichier et un nouveau répertoire.**
 
-
+```
+$ umask 037
+$ mkdir q12
+$ echo 'test q12' > q12/test
+```
+On teste avec un utilisateur
+```
+$ cd /home/herysia
+$ ls
+aaa  abc  q11  q12  repo-cpe  scripts  test
+$ cd q12
+sh: 3: cd: can't cd to q12
+```
+L'utilisateur n'étant pas dans le groupe herysia, cela ne fonctionne pas.
+Ajoutons le `$ sudo usermod -a -G herysia u1
+`
+et réessayons
+```
+$ su u1
+Password:
+$ cd /home/herysia
+$ ls
+aaa  abc  q11  q12  repo-cpe  scripts  test
+$ cd q12
+$ ls
+test
+$ cat test
+test q12
+$ mkdir u1
+mkdir: cannot create directory ‘u1’: Permission denied
+$ touch u1
+touch: cannot touch 'u1': Permission denied
+```
+Ce même utilisateur, faisant désormais partie du groupe herysia, peut désormais naviguer dans les dossiers et lire les fichiers, mais toujour pas écrire des fichiers ou dossier
 &nbsp;
 
 
 **13. Transcrivez les commandes suivantes de la notation classique à la notation octale ou vice-versa (vous pourrez vous aider de la commande stat pour valider vos réponses) :**
-- **chmod u=rx,g=wx,o=r fic**
-- **chmod uo+w,g-rx fic en sachant que les droits initiaux de fic sont r--r-x---**
-- **chmod 653 fic en sachant que les droits initiaux de fic sont 711**
-- **chmod u+x,g=w,o-r fic en sachant que les droits initiaux de fic sont r--r-x---**
+- *chmod u=rx,g=wx,o=r fic*
+`chmod 534 fic`
+- *chmod uo+w,g-rx fic en sachant que les droits initiaux de fic sont r--r-x---*
+`chmod 604 fic`
+- *chmod 653 fic en sachant que les droits initiaux de fic sont 711*
+`chmod u-x,g-r,o-w fic`
+- *chmod u+x,g=w,o-r fic en sachant que les droits initiaux de fic sont r--r-x---*
+`chmod 520 fic`
 
 
 &nbsp;
@@ -553,6 +652,13 @@ Dans le répertoire test, nous n'avons pas les droits d'exécution, nous ne pouv
 
 **14. Affichez les droits sur le programme passwd. Que remarquez-vous ? En affichant les droits du fichier /etc/passwd, pouvez-vous justifier les permissions sur le programme passwd ?**
 
+```
+$ stat -c %A /etc/passwd
+-rw-r--r--
+```
+Ces permissions correspondent aux permissions par défaut pour un fichier.
+Le propriétaire de se fichier est root, donc les permissions users n'ont pas d'importance.
+Les autres utilisateurs (group et other) possède seulement le droit en lecture, ce qui leur permet de lister les utilisateurs, connaître leur groupe, etc (comme vu précédemment). Mais ils ne peuvent pas l'éditer (en effet il est obligatoire d'être root pour créer un utilisateur)
 
 &nbsp;
 
